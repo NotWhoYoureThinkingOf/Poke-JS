@@ -1,7 +1,6 @@
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
-
-console.log(collisions);
+console.log(gsap);
 
 // Map
 canvas.width = 1024;
@@ -34,6 +33,32 @@ collisionsMap.forEach((row, i) => {
   });
 });
 
+// battle zones
+const battleZonesMap = [];
+for (let i = 0; i < battleZonesData.length; i += 70) {
+  battleZonesMap.push(battleZonesData.slice(i, 70 + i));
+}
+
+console.log(battleZonesMap);
+
+const battleZones = [];
+
+battleZonesMap.forEach((row, i) => {
+  row.forEach((symbol, j) => {
+    if (symbol === 1025)
+      battleZones.push(
+        new Boundary({
+          position: {
+            x: j * Boundary.width + offset.x, // these are from the "static" values
+            y: i * Boundary.height + offset.y,
+          },
+        })
+      );
+  });
+});
+
+console.log(battleZones);
+
 // background image
 const image = new Image();
 image.src = "Assets/Pellet Town.png";
@@ -61,7 +86,7 @@ const player = new Sprite({
     y: canvas.height / 2 - 68 / 2, // actual y
   },
   image: playerDownImage,
-  frames: { max: 4 },
+  frames: { max: 4, hold: 10 },
   sprites: {
     up: playerUpImage,
     left: playerLeftImage,
@@ -104,7 +129,7 @@ const keys = {
 };
 
 // things we want to be able to move on the map
-const movables = [background, ...boundaries, foreground];
+const movables = [background, ...boundaries, foreground, ...battleZones];
 
 const rectangularCollision = ({ rectangle1, rectangle2 }) => {
   return (
@@ -115,20 +140,84 @@ const rectangularCollision = ({ rectangle1, rectangle2 }) => {
   );
 };
 
+const battle = {
+  initiated: false,
+};
+
 const animate = () => {
-  window.requestAnimationFrame(animate);
+  const animationId = window.requestAnimationFrame(animate);
+  // console.log(animationId);
   background.draw();
   boundaries.forEach((boundary) => {
     boundary.draw();
   });
+  battleZones.forEach((battleZone) => {
+    battleZone.draw();
+  });
   player.draw();
   foreground.draw();
 
-  // moving
+  // if this is true, we want to stop player movement so all of the code below will not run
   let moving = true;
-  player.moving = false;
+  player.animate = false;
+
+  console.log(animationId);
+  if (battle.initiated) return;
+
+  // moving & activate a battle when battle zone collision happens
+  if (keys.w.pressed || keys.a.pressed || keys.s.pressed || keys.d.pressed) {
+    for (let i = 0; i < battleZones.length; i++) {
+      const battleZone = battleZones[i];
+      const overlappingArea =
+        (Math.min(
+          player.position.x + player.width,
+          battleZone.position.x + battleZone.width
+        ) -
+          Math.max(player.position.x, battleZone.position.x)) *
+        (Math.min(
+          player.position.y + player.height,
+          battleZone.position.y + battleZone.height
+        ) -
+          Math.max(player.position.y, battleZone.position.y));
+      if (
+        rectangularCollision({
+          rectangle1: player,
+          rectangle2: battleZone,
+        }) &&
+        overlappingArea > (player.width * player.height) / 2 &&
+        Math.random() < 0.01
+      ) {
+        // deactivate current animation loop using the current animationId we assigned at the beginning of animate()
+        window.cancelAnimationFrame(animationId);
+        battle.initiated = true;
+        // change to battle screen
+        gsap.to("#overlappingDiv", {
+          opacity: 0.9,
+          repeat: 3,
+          yoyo: true,
+          duration: 0.2,
+          onComplete: () => {
+            gsap.to("#overlappingDiv", {
+              opacity: 1,
+              duration: 0.2,
+              // activate new animation loop
+              onComplete: () => {
+                animateBattle();
+                gsap.to("#overlappingDiv", {
+                  opacity: 0,
+                  duration: 0.5,
+                });
+              },
+            });
+          },
+        });
+        break;
+      }
+    }
+  }
+
   if (keys.w.pressed && lastKey === "w") {
-    player.moving = true;
+    player.animate = true;
     player.image = player.sprites.up;
 
     for (let i = 0; i < boundaries.length; i++) {
@@ -149,13 +238,14 @@ const animate = () => {
         break;
       }
     }
+
     if (moving) {
       movables.forEach((movable) => {
         movable.position.y += 3;
       });
     }
   } else if (keys.a.pressed && lastKey === "a") {
-    player.moving = true;
+    player.animate = true;
     player.image = player.sprites.left;
 
     for (let i = 0; i < boundaries.length; i++) {
@@ -182,7 +272,7 @@ const animate = () => {
       });
     }
   } else if (keys.s.pressed && lastKey === "s") {
-    player.moving = true;
+    player.animate = true;
     player.image = player.sprites.down;
 
     for (let i = 0; i < boundaries.length; i++) {
@@ -209,7 +299,7 @@ const animate = () => {
       });
     }
   } else if (keys.d.pressed && lastKey === "d") {
-    player.moving = true;
+    player.animate = true;
     player.image = player.sprites.right;
 
     for (let i = 0; i < boundaries.length; i++) {
@@ -237,8 +327,66 @@ const animate = () => {
     }
   }
 };
-animate();
 
+// Runs all the animation on the normal map
+// animate();
+
+// Runs all the animation on the battle screen
+const battleBackgroundImage = new Image();
+battleBackgroundImage.src = "Assets/battleBackground.png";
+
+const battleBackground = new Sprite({
+  position: {
+    x: 0,
+    y: 0,
+  },
+  image: battleBackgroundImage,
+});
+
+const draggleImage = new Image();
+draggleImage.src = "Assets/draggleSprite.png";
+
+const draggle = new Sprite({
+  position: {
+    x: 800,
+    y: 100,
+  },
+  image: draggleImage,
+  frames: {
+    max: 4,
+    hold: 30,
+  },
+  animate: true,
+});
+
+const embyImage = new Image();
+embyImage.src = "Assets/embySprite.png";
+
+const emby = new Sprite({
+  position: {
+    x: 300,
+    y: 320,
+  },
+  image: embyImage,
+  frames: {
+    max: 4,
+    hold: 15,
+  },
+  animate: true,
+});
+
+const animateBattle = () => {
+  window.requestAnimationFrame(animateBattle);
+  battleBackground.draw();
+  draggle.draw();
+  emby.draw();
+  console.log("animate battle");
+};
+
+// Run battle screen animation
+animateBattle();
+
+// Used to get the lastKey pressed so there's no directional moving key overlapping another
 let lastKey = "";
 
 // Moving player
