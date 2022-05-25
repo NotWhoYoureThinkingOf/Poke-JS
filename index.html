@@ -53,14 +53,66 @@
         style="
           background-color: white;
           width: 250px;
-          height: 100px;
           position: absolute;
           top: 50px;
           left: 50px;
           border: 4px solid black;
+          padding: 12px;
         "
       >
         <h1 style="font-size: 16px">Draggle</h1>
+        <div class="" style="position: relative">
+          <div
+            class=""
+            style="height: 5px; background-color: #ccc; margin-top: 10px"
+          ></div>
+          <div
+            class=""
+            id="enemyHealthBar"
+            style="
+              height: 5px;
+              background-color: rgb(50, 212, 145);
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              right: 0;
+            "
+          ></div>
+        </div>
+      </div>
+      <div
+        class="Emby-Health"
+        style="
+          background-color: white;
+          width: 250px;
+          position: absolute;
+          top: 330px;
+          right: 50px;
+          border: 4px solid black;
+          padding: 12px;
+        "
+      >
+        <h1 style="font-size: 16px">Emby</h1>
+        <div class="" style="position: relative">
+          <div
+            class=""
+            style="height: 5px; background-color: #ccc; margin-top: 10px"
+          ></div>
+          <div
+            class=""
+            id="playerHealthBar"
+            style="
+              height: 5px;
+              background-color: rgb(50, 212, 145);
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              right: 0;
+            "
+          ></div>
+        </div>
       </div>
       <canvas></canvas>
       <div
@@ -84,10 +136,8 @@
             grid-template-columns: repeat(2, 1fr);
           "
         >
-          <button>Attack1</button>
-          <button>Attack2</button>
-          <button>Attack3</button>
-          <button>Attack4</button>
+          <button>Tackle</button>
+          <button>Fireball</button>
         </div>
         <div
           class="Attack-Type"
@@ -99,7 +149,7 @@
             border-left: 4px solid black;
           "
         >
-          <h1 style="text-align: center; font-size: 1.5rem">Attack Type</h1>
+          <h1 style="text-align: center; font-size: 1rem">Attack Type</h1>
         </div>
       </div>
     </div>
@@ -111,6 +161,7 @@
     ></script>
     <script src="data/battleZones.js"></script>
     <script src="data/collisions.js"></script>
+    <script src="data/attacks.js"></script>
     <script src="data/classes.js"></script>
     <script src="index.js"></script>
   </body>

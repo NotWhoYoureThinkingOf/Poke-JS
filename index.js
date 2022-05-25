@@ -357,6 +357,7 @@ const draggle = new Sprite({
     hold: 30,
   },
   animate: true,
+  isEnemy: true,
 });
 
 const embyImage = new Image();
@@ -375,16 +376,30 @@ const emby = new Sprite({
   animate: true,
 });
 
+const renderedSprites = [draggle, emby];
 const animateBattle = () => {
   window.requestAnimationFrame(animateBattle);
   battleBackground.draw();
-  draggle.draw();
-  emby.draw();
-  console.log("animate battle");
+
+  renderedSprites.forEach((sprite) => {
+    sprite.draw();
+  });
 };
 
 // Run battle screen animation
 animateBattle();
+
+// Attacks
+document.querySelectorAll("button").forEach((button) => {
+  button.addEventListener("click", (e) => {
+    const selectedAttack = attacks[e.currentTarget.innerHTML];
+    emby.attack({
+      attack: selectedAttack,
+      recipient: draggle,
+      renderedSprites,
+    });
+  });
+});
 
 // Used to get the lastKey pressed so there's no directional moving key overlapping another
 let lastKey = "";
