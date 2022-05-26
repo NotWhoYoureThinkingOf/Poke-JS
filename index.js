@@ -1,6 +1,5 @@
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
-console.log(gsap);
 
 // Map
 canvas.width = 1024;
@@ -39,8 +38,6 @@ for (let i = 0; i < battleZonesData.length; i += 70) {
   battleZonesMap.push(battleZonesData.slice(i, 70 + i));
 }
 
-console.log(battleZonesMap);
-
 const battleZones = [];
 
 battleZonesMap.forEach((row, i) => {
@@ -56,8 +53,6 @@ battleZonesMap.forEach((row, i) => {
       );
   });
 });
-
-console.log(battleZones);
 
 // background image
 const image = new Image();
@@ -94,8 +89,6 @@ const player = new Sprite({
     down: playerDownImage,
   },
 });
-
-console.log(player);
 
 const background = new Sprite({
   position: {
@@ -161,7 +154,6 @@ const animate = () => {
   let moving = true;
   player.animate = false;
 
-  console.log(animationId);
   if (battle.initiated) return;
 
   // moving & activate a battle when battle zone collision happens
@@ -189,6 +181,11 @@ const animate = () => {
       ) {
         // deactivate current animation loop using the current animationId we assigned at the beginning of animate()
         window.cancelAnimationFrame(animationId);
+
+        audio.Map.stop();
+        audio.initBattle.play();
+        audio.battle.play();
+
         battle.initiated = true;
         // change to battle screen
         gsap.to("#overlappingDiv", {
@@ -202,6 +199,7 @@ const animate = () => {
               duration: 0.2,
               // activate new animation loop
               onComplete: () => {
+                initBattle();
                 animateBattle();
                 gsap.to("#overlappingDiv", {
                   opacity: 0,
@@ -328,79 +326,6 @@ const animate = () => {
   }
 };
 
-// Runs all the animation on the normal map
-// animate();
-
-// Runs all the animation on the battle screen
-const battleBackgroundImage = new Image();
-battleBackgroundImage.src = "Assets/battleBackground.png";
-
-const battleBackground = new Sprite({
-  position: {
-    x: 0,
-    y: 0,
-  },
-  image: battleBackgroundImage,
-});
-
-const draggleImage = new Image();
-draggleImage.src = "Assets/draggleSprite.png";
-
-const draggle = new Sprite({
-  position: {
-    x: 800,
-    y: 100,
-  },
-  image: draggleImage,
-  frames: {
-    max: 4,
-    hold: 30,
-  },
-  animate: true,
-  isEnemy: true,
-});
-
-const embyImage = new Image();
-embyImage.src = "Assets/embySprite.png";
-
-const emby = new Sprite({
-  position: {
-    x: 300,
-    y: 320,
-  },
-  image: embyImage,
-  frames: {
-    max: 4,
-    hold: 15,
-  },
-  animate: true,
-});
-
-const renderedSprites = [draggle, emby];
-const animateBattle = () => {
-  window.requestAnimationFrame(animateBattle);
-  battleBackground.draw();
-
-  renderedSprites.forEach((sprite) => {
-    sprite.draw();
-  });
-};
-
-// Run battle screen animation
-animateBattle();
-
-// Attacks
-document.querySelectorAll("button").forEach((button) => {
-  button.addEventListener("click", (e) => {
-    const selectedAttack = attacks[e.currentTarget.innerHTML];
-    emby.attack({
-      attack: selectedAttack,
-      recipient: draggle,
-      renderedSprites,
-    });
-  });
-});
-
 // Used to get the lastKey pressed so there's no directional moving key overlapping another
 let lastKey = "";
 
@@ -445,4 +370,12 @@ window.addEventListener("keyup", (e) => {
       break;
   }
   // console.log(keys);
+});
+
+let clicked = false;
+addEventListener("click", () => {
+  if (!clicked) {
+    audio.Map.play();
+    clicked = true;
+  }
 });
